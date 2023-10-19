@@ -80,7 +80,7 @@ void networkRoutine() {
     ioctlsocket(client_getSocket(client), FIONBIO, &mode);
     char buffer[BUFSIZ];
     wchar_t w_buffer[BUFSIZ];
-    if(connectToServer(client, "31.132.235.171", 8080) == TRUE) {
+    if(connectToServer(client, "", 8080) == TRUE) {
         TextEdit_append(childrenList[0], L"Connected to server successfully.\r\n");
     } else {
         TextEdit_append(childrenList[0], L"Connected to server ERROR.\r\n");
