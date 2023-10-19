@@ -56,7 +56,7 @@ int WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 void createChildrens(HWND hWnd) {
     childrenList = (HWND*)calloc(10, sizeof(*childrenList));
     childrenList[0] = CreateWindow(L"Edit", L" ", WS_VISIBLE | WS_CHILDWINDOW | ES_MULTILINE 
-    | ES_READONLY | ES_AUTOVSCROLL, 0, 0, 210, 200, hWnd, 0, 0, 0);
+    | ES_READONLY | ES_AUTOVSCROLL, 0, 0, 200, 200, hWnd, 0, 0, 0);
     childrenList[1] = CreateWindow(L"Edit", L" ", WS_VISIBLE | WS_CHILDWINDOW | ES_MULTILINE  
     , 220, 0, 150, 50, hWnd, 0, 0, 0);
     childrenList[2] = CreateWindow(L"Button", L"Отправить", WS_VISIBLE | WS_CHILDWINDOW | BS_PUSHBUTTON 
