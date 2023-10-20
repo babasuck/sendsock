@@ -9,6 +9,7 @@ int WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 HWND* childrenList;
 int SEND = 0;
+int isConnected = 0;
 
 
 int WINAPI wWinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nShowCmd) {
@@ -33,7 +34,6 @@ int WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch(uMsg) {
         case WM_CREATE:
             createChildrens(hWnd);
-            CreateThread(0, 0, networkRoutine, 0, 0, 0);
             break;
         case WM_DESTROY:
             ExitProcess(0);
@@ -41,6 +41,12 @@ int WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         case WM_COMMAND:
             if (LOWORD(wParam) == 3) {
                 SEND = 1;
+            }
+            if (LOWORD(wParam) == 4) {
+                if(!isConnected) {
+                    CreateThread(0, 0, networkRoutine, 0, 0, 0);
+                    isConnected = 1;
+                }
             }
             break;
         case WM_PAINT:
@@ -55,12 +61,19 @@ int WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 
 void createChildrens(HWND hWnd) {
     childrenList = (HWND*)calloc(10, sizeof(*childrenList));
+    // Messages 
     childrenList[0] = CreateWindow(L"Edit", L" ", WS_VISIBLE | WS_CHILDWINDOW | ES_MULTILINE 
     | ES_READONLY | ES_AUTOVSCROLL, 0, 0, 210, 200, hWnd, 0, 0, 0);
+    // Message 
     childrenList[1] = CreateWindow(L"Edit", L" ", WS_VISIBLE | WS_CHILDWINDOW | ES_MULTILINE  
-    , 220, 0, 150, 50, hWnd, 0, 0, 0);
-    childrenList[2] = CreateWindow(L"Button", L"Отправить", WS_VISIBLE | WS_CHILDWINDOW | BS_PUSHBUTTON 
-    , 220, 70, 90, 60, hWnd, (HMENU)3, 0, 0);
+    , 220, 80, 150, 50, hWnd, 0, 0, 0);
+    // Send button
+    childrenList[2] = CreateWindow(L"Button", L"Send", WS_VISIBLE | WS_CHILDWINDOW | BS_PUSHBUTTON 
+    , 220, 140, 90, 30, hWnd, (HMENU)3, 0, 0);
+    // Ip-address
+    childrenList[3] = CreateWindow(L"Edit", L"", WS_VISIBLE | WS_CHILDWINDOW, 220, 0, 100, 30, hWnd, 0, 0, 0);
+    // Connect button
+    childrenList[4] = CreateWindow(L"Button", L"Connect", WS_VISIBLE | WS_CHILDWINDOW | BS_PUSHBUTTON, 220, 40, 90, 30, hWnd, (HMENU)4, 0, 0);
 }
 
 void TextEdit_append(HWND hWnd, const PWSTR newText) {
@@ -76,15 +89,19 @@ void TextEdit_append(HWND hWnd, const PWSTR newText) {
 
 void networkRoutine() {
     Client* client = createClient();
-    unsigned long mode = 1; 
-    ioctlsocket(client_getSocket(client), FIONBIO, &mode);
     char buffer[BUFSIZ];
     wchar_t w_buffer[BUFSIZ];
-    if(connectToServer(client, "", 8080) == TRUE) {
+    GetWindowTextA(childrenList[3], buffer, BUFSIZ);
+    if(!connectToServer(client, buffer, 8080)) {
         TextEdit_append(childrenList[0], L"Connected to server successfully.\r\n");
     } else {
         TextEdit_append(childrenList[0], L"Connected to server ERROR.\r\n");
+        isConnected = 0;
+        ExitThread(0);
     }
+    ZeroMemory(buffer, BUFSIZ);
+    unsigned long mode = 1; 
+    ioctlsocket(client_getSocket(client), FIONBIO, &mode);
     while(1) {
         int bytesReceived  = 0;
         if((bytesReceived = recv(client_getSocket(client), buffer, BUFSIZ, 0)) > 0) {
@@ -92,6 +109,8 @@ void networkRoutine() {
             wchar_t* wideStr = (wchar_t*)malloc(wideSize * sizeof(wchar_t));
             MultiByteToWideChar(CP_UTF8, 0, buffer, bytesReceived, wideStr, wideSize);
             TextEdit_append(childrenList[0], wideStr);
+            int lineCount = SendMessage(childrenList[0], EM_GETLINECOUNT, 0, 0);
+            SendMessage(childrenList[0], EM_LINESCROLL, 0, lineCount);
             free(wideStr);
         }
            if (SEND == 1) {

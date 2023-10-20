@@ -15,15 +15,12 @@ struct Client* createClient() {
     return client;
 }
 
-BOOL connectToServer(struct Client* client, const char* IP, UINT port) {
+int connectToServer(struct Client* client, const char* IP, UINT port) {
     sockaddr_in serverAdress = {0};
     serverAdress.sin_family = AF_INET;
     serverAdress.sin_port = htons(port);
     serverAdress.sin_addr.s_addr = inet_addr(IP);
-    if(connect(client->clientSocket, (struct sockaddr*)&serverAdress, sizeof serverAdress) == 0) {
-        return TRUE;
-    } 
-    return FALSE;
+    return connect(client->clientSocket, (struct sockaddr*)&serverAdress, sizeof serverAdress);
 }
 
 SOCKET client_getSocket(struct Client* client) {
